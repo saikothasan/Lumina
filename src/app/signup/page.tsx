@@ -5,7 +5,7 @@ import { account } from "@/lib/appwrite"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type React from "react" // Added import for React
+import type React from "react"
 
 export default function SignUp() {
   const [email, setEmail] = useState("")
@@ -17,7 +17,7 @@ export default function SignUp() {
     e.preventDefault()
     try {
       await account.create("unique()", email, password, name)
-      await account.createEmailSession(email, password)
+      await account.createSession(email, password)
       router.push("/")
     } catch (error) {
       console.error("Sign up failed", error)
