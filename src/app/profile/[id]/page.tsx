@@ -23,6 +23,8 @@ import Image from "next/image"
 import { Query } from "appwrite"
 import { toast } from "@/hooks/use-toast"
 
+export const runtime = "edge"
+
 export default function Profile() {
   const { id } = useParams()
   const { user: currentUser } = useAuth()
