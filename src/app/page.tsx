@@ -9,7 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Client } from "appwrite"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 
 export default function Home() {
   const [posts, setPosts] = useState<PostType[]>([])
