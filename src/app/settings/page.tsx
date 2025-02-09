@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { updateUserPrivacySettings } from "@/lib/appwrite"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
   const { user } = useAuth()
