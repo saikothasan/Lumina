@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navigation } from "@/components/Navigation"
 import { UserSettings } from "@/components/UserSettings"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
@@ -13,11 +13,21 @@ import { toast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
   const { user } = useAuth()
-  const [isPrivate, setIsPrivate] = useState(user?.isPrivate || false)
-  const [showActivityStatus, setShowActivityStatus] = useState(user?.showActivityStatus || true)
-  const [allowTagging, setAllowTagging] = useState(user?.allowTagging || true)
+  const [isPrivate, setIsPrivate] = useState(false)
+  const [showActivityStatus, setShowActivityStatus] = useState(true)
+  const [allowTagging, setAllowTagging] = useState(true)
+
+  useEffect(() => {
+    if (user) {
+      setIsPrivate(user.isPrivate || false)
+      setShowActivityStatus(user.showActivityStatus || true)
+      setAllowTagging(user.allowTagging || true)
+    }
+  }, [user])
 
   const handlePrivacySettingsUpdate = async () => {
+    if (!user) return
+
     try {
       await updateUserPrivacySettings(user.$id, {
         isPrivate,
@@ -30,6 +40,8 @@ export default function SettingsPage() {
       toast({ title: "Error updating privacy settings", variant: "destructive" })
     }
   }
+
+  if (!user) return null
 
   return (
     <ProtectedRoute>
