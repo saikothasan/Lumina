@@ -18,7 +18,7 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     try {
-      await account.createEmailSession(email, password)
+      await account.createSession(email, password)
       toast({ title: "Login successful" })
       router.push("/")
     } catch (error) {
