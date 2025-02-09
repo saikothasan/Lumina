@@ -11,6 +11,7 @@ import { Query } from "appwrite"
 
 export function DirectMessages() {
   const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
   const [conversations, setConversations] = useState([])
   const [activeConversation, setActiveConversation] = useState(null)
   const [messages, setMessages] = useState([])
@@ -18,14 +19,18 @@ export function DirectMessages() {
 
   useEffect(() => {
     const fetchConversations = async () => {
-      const response = await databases.listDocuments(appwriteConfig.databaseId, "conversations-collection-id", [
-        Query.equal("participants", user.$id),
-      ])
-      setConversations(response.documents)
+      setLoading(true)
+      if (user) {
+        const response = await databases.listDocuments(appwriteConfig.databaseId, "conversations-collection-id", [
+          Query.equal("participants", user.$id),
+        ])
+        setConversations(response.documents)
+      }
+      setLoading(false)
     }
 
     fetchConversations()
-  }, [user.$id])
+  }, [user])
 
   useEffect(() => {
     if (activeConversation) {
@@ -53,6 +58,10 @@ export function DirectMessages() {
 
     setNewMessage("")
     // Refetch messages
+  }
+
+  if (loading) {
+    return <div>Loading conversations...</div>
   }
 
   return (
