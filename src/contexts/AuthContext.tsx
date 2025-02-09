@@ -2,18 +2,20 @@
 
 import type React from "react"
 import { createContext, useState, useEffect, useContext } from "react"
-import { getCurrentUser } from "@/lib/appwrite"
+import { getCurrentUser, type User as AppwriteUser } from "@/lib/appwrite"
 import type { Models } from "appwrite"
 
+type User = AppwriteUser & Models.User<Models.Preferences>
+
 type AuthContextType = {
-  user: Models.User<Models.Preferences> | null
+  user: User | null
   loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true })
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
