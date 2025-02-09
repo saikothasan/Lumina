@@ -10,13 +10,20 @@ type User = AppwriteUser & Models.User<Models.Preferences>
 type AuthContextType = {
   user: User | null
   loading: boolean
-  setUser: React.Dispatch<React.SetStateAction<User | null>>
+  setUser: (newUser: User | null | ((prevUser: User | null) => User | null)) => void
 }
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, setUser: () => {} })
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
+  const setUserWrapper = (newUser: User | null | ((prevUser: User | null) => User | null)) => {
+    if (typeof newUser === "function") {
+      setUser(newUser)
+    } else {
+      setUser(() => newUser)
+    }
+  }
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -34,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkUser()
   }, [])
 
-  return <AuthContext.Provider value={{ user, loading, setUser }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, setUser: setUserWrapper }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => useContext(AuthContext)
