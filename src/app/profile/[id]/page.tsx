@@ -10,6 +10,9 @@ import {
   unfollowUser,
   getFollowers,
   getFollowing,
+  type User,
+  type Post,
+  type Follow,
 } from "@/lib/appwrite"
 import { Navigation } from "@/components/Navigation"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
@@ -18,25 +21,37 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Query } from "appwrite"
+import { toast } from "@/hooks/use-toast"
 
 export default function Profile() {
   const { id } = useParams()
   const { user: currentUser } = useAuth()
-  const [user, setUser] = useState(null)
-  const [posts, setPosts] = useState([])
+  const [user, setUser] = useState<User | null>(null)
+  const [posts, setPosts] = useState<Post[]>([])
   const [isFollowing, setIsFollowing] = useState(false)
   const [followersCount, setFollowersCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchUserAndPosts = async () => {
       try {
-        const userData = await databases.getDocument(appwriteConfig.databaseId, appwriteConfig.usersCollectionId, id)
+        if (typeof id !== "string") {
+          throw new Error("Invalid user ID")
+        }
+
+        const userData = await databases.getDocument<User>(
+          appwriteConfig.databaseId,
+          appwriteConfig.usersCollectionId,
+          id,
+        )
         setUser(userData)
 
-        const postsData = await databases.listDocuments(appwriteConfig.databaseId, appwriteConfig.postsCollectionId, [
-          Query.equal("userId", id),
-        ])
+        const postsData = await databases.listDocuments<Post>(
+          appwriteConfig.databaseId,
+          appwriteConfig.postsCollectionId,
+          [Query.equal("userId", id)],
+        )
         setPosts(postsData.documents)
 
         const followers = await getFollowers(id)
@@ -46,7 +61,7 @@ export default function Profile() {
         setFollowingCount(following.total)
 
         if (currentUser) {
-          const isFollowingResponse = await databases.listDocuments(
+          const isFollowingResponse = await databases.listDocuments<Follow>(
             appwriteConfig.databaseId,
             appwriteConfig.followsCollectionId,
             [Query.equal("followerId", currentUser.$id), Query.equal("followedId", id)],
@@ -55,6 +70,13 @@ export default function Profile() {
         }
       } catch (error) {
         console.error("Error fetching user data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load user profile",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -62,24 +84,33 @@ export default function Profile() {
   }, [id, currentUser])
 
   const handleFollowToggle = async () => {
-    if (!currentUser) return
+    if (!currentUser || !user) return
 
     try {
       if (isFollowing) {
-        await unfollowUser(currentUser.$id, id)
+        await unfollowUser(currentUser.$id, user.$id)
         setFollowersCount((prev) => prev - 1)
       } else {
-        await followUser(currentUser.$id, id)
+        await followUser(currentUser.$id, user.$id)
         setFollowersCount((prev) => prev + 1)
       }
       setIsFollowing(!isFollowing)
     } catch (error) {
       console.error("Error toggling follow:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        variant: "destructive",
+      })
     }
   }
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>
+  }
+
   if (!user) {
-    return <div>Loading...</div>
+    return <div className="flex justify-center items-center h-screen">User not found</div>
   }
 
   return (
@@ -104,7 +135,7 @@ export default function Profile() {
               <span>{followersCount} followers</span>
               <span>{followingCount} following</span>
             </div>
-            {currentUser && currentUser.$id !== id && (
+            {currentUser && currentUser.$id !== user.$id && (
               <Button onClick={handleFollowToggle}>{isFollowing ? "Unfollow" : "Follow"}</Button>
             )}
           </div>
