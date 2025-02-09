@@ -11,7 +11,12 @@ import { Navigation } from "@/components/Navigation"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { toast } from "@/hooks/use-toast"
 
-const filters = [
+interface Filter {
+  name: string
+  filter: string
+}
+
+const filters: Filter[] = [
   { name: "Normal", filter: "" },
   { name: "Grayscale", filter: "grayscale(100%)" },
   { name: "Sepia", filter: "sepia(100%)" },
@@ -23,7 +28,7 @@ export default function CreatePost() {
   const [caption, setCaption] = useState("")
   const [image, setImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [selectedFilter, setSelectedFilter] = useState(filters[0])
+  const [selectedFilter, setSelectedFilter] = useState<Filter>(filters[0])
   const [brightness, setBrightness] = useState(100)
   const [contrast, setContrast] = useState(100)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -43,37 +48,63 @@ export default function CreatePost() {
     if (previewUrl && canvasRef.current) {
       const canvas = canvasRef.current
       const ctx = canvas.getContext("2d")
+      if (!ctx) return
+
       const img = new Image()
+      img.crossOrigin = "anonymous"
       img.onload = () => {
         canvas.width = img.width
         canvas.height = img.height
-        ctx?.drawImage(img, 0, 0, img.width, img.height)
-        applyFilters()
+        applyFilters(ctx, img)
       }
       img.src = previewUrl
     }
-  }, [previewUrl]) // Removed unnecessary dependencies: selectedFilter, brightness, contrast
+  }, [previewUrl])
 
-  const applyFilters = () => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current
-      const ctx = canvas.getContext("2d")
-      ctx?.filter = `${selectedFilter.filter} brightness(${brightness}%) contrast(${contrast}%)`
-      const img = new Image()
-      img.onload = () => {
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height)
-      }
-      img.src = previewUrl!
-    }
+  const applyFilters = (ctx: CanvasRenderingContext2D, img: HTMLImageElement) => {
+    // Clear the canvas first
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+
+    // Create a temporary canvas for applying filters
+    const tempCanvas = document.createElement("canvas")
+    const tempCtx = tempCanvas.getContext("2d")
+    if (!tempCtx) return
+
+    tempCanvas.width = img.width
+    tempCanvas.height = img.height
+
+    // Set the filter on the temporary context
+    tempCtx.filter = `${selectedFilter.filter} brightness(${brightness}%) contrast(${contrast}%)`
+
+    // Draw the image with filters on the temporary canvas
+    tempCtx.drawImage(img, 0, 0, img.width, img.height)
+
+    // Draw the filtered image onto the main canvas
+    ctx.drawImage(tempCanvas, 0, 0)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!image || !canvasRef.current) return
+    if (!image || !canvasRef.current) {
+      toast({
+        title: "Error",
+        description: "Please select an image first",
+        variant: "destructive",
+      })
+      return
+    }
 
     try {
       // Convert canvas to Blob
-      const blob = await new Promise<Blob>((resolve) => canvasRef.current!.toBlob((blob) => resolve(blob!)))
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvasRef.current?.toBlob((blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error("Failed to convert canvas to blob"))
+          }
+        }, "image/jpeg")
+      })
 
       // Create a new File object from the Blob
       const editedImage = new File([blob], image.name, { type: "image/jpeg" })
@@ -88,7 +119,11 @@ export default function CreatePost() {
       router.push("/")
     } catch (error) {
       console.error("Error creating post:", error)
-      toast({ title: "Error creating post", variant: "destructive" })
+      toast({
+        title: "Error creating post",
+        description: "Please try again later",
+        variant: "destructive",
+      })
     }
   }
 
@@ -101,17 +136,18 @@ export default function CreatePost() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} required />
             {previewUrl && (
-              <div>
-                <canvas ref={canvasRef} className="max-w-full h-auto" />
-                <div className="mt-4 space-y-2">
+              <div className="space-y-4">
+                <canvas ref={canvasRef} className="max-w-full h-auto rounded-lg border border-border" />
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Filter</label>
-                    <div className="flex space-x-2">
+                    <label className="block text-sm font-medium mb-2">Filter</label>
+                    <div className="flex flex-wrap gap-2">
                       {filters.map((filter) => (
                         <Button
                           key={filter.name}
                           onClick={() => setSelectedFilter(filter)}
                           variant={selectedFilter.name === filter.name ? "default" : "outline"}
+                          type="button"
                         >
                           {filter.name}
                         </Button>
@@ -119,7 +155,7 @@ export default function CreatePost() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Brightness</label>
+                    <label className="block text-sm font-medium mb-2">Brightness</label>
                     <Slider
                       min={0}
                       max={200}
@@ -129,7 +165,7 @@ export default function CreatePost() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Contrast</label>
+                    <label className="block text-sm font-medium mb-2">Contrast</label>
                     <Slider
                       min={0}
                       max={200}
@@ -146,8 +182,11 @@ export default function CreatePost() {
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               required
+              className="min-h-[100px]"
             />
-            <Button type="submit">Create Post</Button>
+            <Button type="submit" className="w-full">
+              Create Post
+            </Button>
           </form>
         </main>
       </div>
