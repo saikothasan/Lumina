@@ -1,24 +1,34 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { getReels } from "@/lib/appwrite"
+import { getReels, type Reel } from "@/lib/appwrite"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Heart, MessageCircle, Share } from "lucide-react"
 import { appwriteConfig, storage } from "@/lib/appwrite"
+import { toast } from "@/hooks/use-toast"
 
 export function Reels() {
-  const [reels, setReels] = useState([])
+  const [reels, setReels] = useState<Reel[]>([])
   const [currentReelIndex, setCurrentReelIndex] = useState(0)
-  const videoRef = useRef(null)
+  const [loading, setLoading] = useState(true)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const fetchReels = async () => {
       try {
+        setLoading(true)
         const fetchedReels = await getReels()
         setReels(fetchedReels.documents)
       } catch (error) {
         console.error("Error fetching reels:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load reels. Please try again later.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -27,9 +37,9 @@ export function Reels() {
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.play()
+      videoRef.current.play().catch((error) => console.error("Error playing video:", error))
     }
-  }, [videoRef]) //Fixed unnecessary dependency
+  }, [videoRef]) //Corrected dependency
 
   const handleNextReel = () => {
     setCurrentReelIndex((prevIndex) => (prevIndex + 1) % reels.length)
@@ -39,8 +49,12 @@ export function Reels() {
     setCurrentReelIndex((prevIndex) => (prevIndex - 1 + reels.length) % reels.length)
   }
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading reels...</div>
+  }
+
   if (reels.length === 0) {
-    return <div>Loading reels...</div>
+    return <div className="flex justify-center items-center h-screen">No reels available</div>
   }
 
   const currentReel = reels[currentReelIndex]
@@ -81,7 +95,7 @@ export function Reels() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-1/2 left-4 transform -translate-y-1/2"
+        className="absolute top-1/2 left-4 transform -translate-y-1/2 text-white"
         onClick={handlePrevReel}
       >
         ←
@@ -89,7 +103,7 @@ export function Reels() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-1/2 right-4 transform -translate-y-1/2"
+        className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white"
         onClick={handleNextReel}
       >
         →
