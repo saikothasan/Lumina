@@ -15,17 +15,27 @@ export function UserSettings() {
   const [bio, setBio] = useState("")
   const [website, setWebsite] = useState("")
   const [avatar, setAvatar] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchUserDetails = async () => {
       if (user) {
-        const userDetails = await databases.getDocument(
-          appwriteConfig.databaseId,
-          appwriteConfig.usersCollectionId,
-          user.$id,
-        )
-        setBio(userDetails.bio || "")
-        setWebsite(userDetails.website || "")
+        try {
+          const userDetails = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionId,
+            user.$id,
+          )
+          setBio(userDetails.bio || "")
+          setWebsite(userDetails.website || "")
+        } catch (error) {
+          console.error("Error fetching user details:", error)
+          toast({
+            title: "Error",
+            description: "Failed to load user details. Please try again later.",
+            variant: "destructive",
+          })
+        }
       }
     }
     fetchUserDetails()
@@ -35,6 +45,7 @@ export function UserSettings() {
     e.preventDefault()
     if (!user) return
 
+    setLoading(true)
     try {
       let avatarId = user.avatar
       if (avatar) {
@@ -48,6 +59,8 @@ export function UserSettings() {
     } catch (error) {
       console.error("Error updating profile:", error)
       toast({ title: "Error updating profile", variant: "destructive" })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -65,7 +78,9 @@ export function UserSettings() {
       <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
       <Textarea placeholder="Bio" value={bio} onChange={(e) => setBio(e.target.value)} />
       <Input placeholder="Website" value={website} onChange={(e) => setWebsite(e.target.value)} />
-      <Button type="submit">Save Profile</Button>
+      <Button type="submit" disabled={loading}>
+        {loading ? "Saving..." : "Save Profile"}
+      </Button>
     </form>
   )
 }
