@@ -5,20 +5,31 @@ import { account } from "@/lib/appwrite"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import type React from "react" // Added import for React
+import { toast } from "@/hooks/use-toast"
+import Link from "next/link"
 
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setLoading(true)
     try {
       await account.createEmailSession(email, password)
+      toast({ title: "Login successful" })
       router.push("/")
     } catch (error) {
       console.error("Login failed", error)
+      toast({
+        title: "Login failed",
+        description: "Please check your credentials and try again",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -34,10 +45,16 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Button type="submit" className="w-full">
-          Login
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
+      <p className="mt-4">
+        Don't have an account?{" "}
+        <Link href="/signup" className="text-primary hover:underline">
+          Sign up
+        </Link>
+      </p>
     </div>
   )
 }
