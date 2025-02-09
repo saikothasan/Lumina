@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Navigation } from "@/components/Navigation"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 
 const filters = [
   { name: "Normal", filter: "" },
