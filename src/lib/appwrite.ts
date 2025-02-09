@@ -9,21 +9,21 @@ export const databases = new Databases(client)
 export const storage = new Storage(client)
 
 export const appwriteConfig = {
-  databaseId: "your-database-id",
-  postsCollectionId: "posts-collection-id",
-  usersCollectionId: "users-collection-id",
-  likesCollectionId: "likes-collection-id",
-  commentsCollectionId: "comments-collection-id",
-  followsCollectionId: "follows-collection-id",
-  storiesCollectionId: "stories-collection-id",
-  conversationsCollectionId: "conversations-collection-id",
-  messagesCollectionId: "messages-collection-id",
-  notificationsCollectionId: "notifications-collection-id",
-  reelsCollectionId: "reels-collection-id",
-  hashtagsCollectionId: "hashtags-collection-id",
-  bookmarksCollectionId: "bookmarks-collection-id",
-  blockedUsersCollectionId: "blocked-users-collection-id",
-  bucketId: "your-bucket-id",
+  databaseId: "67a6583c003326ec2be8",
+  postsCollectionId: "67a845820018daffde0f",
+  usersCollectionId: "67a845a9001e1c6f7b54",
+  likesCollectionId: "67a845c5000e2a83fc34",
+  commentsCollectionId: "67a845e10024876abb55",
+  followsCollectionId: "67a8460300330b0970eb",
+  storiesCollectionId: "67a84627002fb395d8c0",
+  conversationsCollectionId: "67a846560026880a1e72",
+  messagesCollectionId: "67a84675001c9d6051c9",
+  notificationsCollectionId: "67a84690002feaa28be1",
+  reelsCollectionId: "67a846a8002b3d9ce9e8",
+  hashtagsCollectionId: "67a846c200098eb5bfbe",
+  bookmarksCollectionId: "67a846d80024b5c66f7f",
+  blockedUsersCollectionId: "67a846ef0026303931bb",
+  bucketId: "67a6580a00120a046efd",
 }
 
 export interface User extends Models.Document {
