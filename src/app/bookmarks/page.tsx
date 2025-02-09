@@ -6,7 +6,7 @@ import { Post } from "@/components/Post"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { getBookmarkedPosts } from "@/lib/appwrite"
 import { useAuth } from "@/contexts/AuthContext"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 
 export default function BookmarksPage() {
   const { user } = useAuth()
